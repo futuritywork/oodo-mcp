@@ -1,8 +1,12 @@
 # oodo-mcp
 
-Odoo 19 Futurity MCP scaffold with request-scoped credentials and a separate
-API client, following `smip-mcp`'s credential flow. No business tools are
-registered yet. The package/plugin identifier remains `oodo-mcp`.
+Odoo 19 Futurity MCP invoice lab with request-scoped credentials and a separate
+API client, following `smip-mcp`'s credential flow. The package/plugin identifier
+remains `oodo-mcp`.
+
+**Intentional lab bug — not production-safe:** unpaid invoice reads omit both
+company filtering and company context. Invoices are grouped by customer across
+companies visible to the API user, not by company. Odoo access rules still apply.
 
 ## Setup
 
@@ -43,10 +47,72 @@ authenticate the caller's platform identity. Odoo validates key validity and use
 permissions on API calls. Discovery is public; there is no OAuth token endpoint,
 login/password exchange, refresh cache, or API-key preview tool.
 
+## Tools
+
+### `odoo_unpaid_invoices` (read)
+
+```json
+{ "offset": 0, "limit": 100 }
+```
+
+Reads `account.move` with `move_type = out_invoice`, `state = posted`, and
+`amount_residual > 0`. Returns customer groups with invoice ID/name, customer,
+currency, due date (`false` when absent), and residual amount. Each group's
+`currency_totals` keeps currencies separate. Totals are **page-scoped**, marked
+`totals_scope: "page"`; they are not complete customer balances.
+
+`offset` defaults to 0; `limit` defaults to 100 (1–200). The read orders by ID and
+fetches one extra row to report `has_more`. When true, request the next page with
+`offset + limit`. Concurrent invoice changes can affect offset pagination.
+
+### `odoo_schedule_followup` (write)
+
+```json
+{
+  "invoice_id": 42,
+  "attendee_name": "Alex",
+  "note": "Call about the outstanding invoice.",
+  "due_date": "2026-08-14",
+  "activity_type_id": 4,
+  "assignee_user_id": 7
+}
+```
+
+IDs are illustrative: supply an accessible posted customer invoice, a known
+activity type, and the intended assignee's Odoo user ID. No IDs are guessed.
+The tool validates a real `YYYY-MM-DD` calendar date, checks the invoice, resolves
+`account.move` through `ir.model`, and creates one `mail.activity` using
+`vals_list`. It returns an integer array of created activity IDs. The attendee
+prefix and note are HTML-escaped; note line breaks are preserved. This schedules
+an activity, not a calendar attendee invitation or an email.
+
+Odoo permissions govern each operation. The checks and creation are separate
+transactions, so invoice state can change between them. Calls are never retried;
+a failed/timeout response may have an uncertain write outcome. Verify existing
+activities before repeating a write.
+
+### Instructor: deliberate company-scope defect
+
+The read intentionally supplies neither a `company_id` domain nor
+`allowed_company_ids` context and groups solely by customer. It can therefore
+mix invoices from multiple companies available in Odoo's effective context.
+The lab's expected **18 vs 9** fixture result has not been verified against a
+live instance and depends on data, API-user access, and effective company context.
+
+For the company-scope exercise, add this to the unpaid `search_read` **params**:
+
+```json
+{ "context": { "allowed_company_ids": [1] } }
+```
+
+Use `[1]` only if company 1 is the intended, known accessible company for the
+API user; otherwise use the verified company ID. This is instructor guidance,
+not an implemented fix or a tool input. The deliberate defect remains in the lab.
+
 ## Client
 
 `src/index.ts` configures the app and client, then starts the listener.
-Register future tools before `app.listen()`; use
+Invoice tools are registered before `app.listen()` and use
 `client.post({ model, method, params: namedParams, responseSchema, caller: signal })` inside their handlers. Model and method names should be selected by the tool code.
 
 The client posts named JSON parameters to `/json/2/<model>/<method>` with
@@ -66,7 +132,8 @@ bot account and rotate its API key before expiry.
 | `src/manifest.ts` | Signed discovery manifest configuration |
 | `src/auth.ts` | Request-scoped credential validation |
 | `src/client.ts` | API-key authorization, Odoo 19 JSON-2 transport, and safe errors |
-| `src/index.ts` | Environment configuration, app setup, middleware, and listener |
+| `src/index.ts` | Environment configuration, app setup, middleware, tool registration, and listener |
+| `src/tools/invoices.ts` | Paginated unpaid invoice groups and follow-up activity creation |
 
 ```bash
 bun run check

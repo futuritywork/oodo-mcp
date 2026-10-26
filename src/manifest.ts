@@ -20,11 +20,11 @@ export function createOdooManifest(options: {
       ],
     },
     signingKey: options.signingKey,
-    description: "Odoo 19 integration using organization-configured API keys.",
+    description: "Odoo 19 invoice lab: unpaid invoice reads and follow-up activities using organization-configured API keys.",
     category: "Business",
     metadata: {
-      tagline: "Odoo 19 API integration",
-      overview: "An administrator configures an Odoo API key. This initial scaffold includes authentication and a JSON-2 client; business tools will be added separately.",
+      tagline: "Odoo invoice follow-up lab",
+      overview: "Read unpaid invoices and schedule invoice follow-up activities. This training lab intentionally omits company scoping from unpaid invoice reads, combining customers across accessible companies. An administrator configures the Odoo API key; follow-ups require explicit activity type and assignee IDs.",
       setupType: "admin",
     },
   };
