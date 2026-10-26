@@ -15,7 +15,7 @@ const app = mcp({
   name: "oodo-mcp",
   version: "0.1.0",
   path: "/mcp",
-  instructions: "Odoo 19 invoice lab. odoo_unpaid_invoices intentionally omits company scoping and groups across accessible companies; totals are page-scoped and separated by currency. Follow has_more with offset/limit. odoo_schedule_followup writes an activity on a posted customer invoice; obtain explicit activity_type_id and assignee_user_id rather than guessing. Do not blindly repeat writes after an uncertain outcome. Organization API keys are supplied through request headers, never tool arguments.",
+  instructions: "Odoo 19 invoice lab. odoo_unpaid_invoices intentionally omits company scoping and returns a flat invoice list across accessible companies. Follow has_more with offset/limit. odoo_schedule_followup writes an activity on a posted customer invoice; obtain explicit activity_type_id and assignee_user_id rather than guessing. Do not blindly repeat writes after an uncertain outcome. Organization API keys are supplied through request headers, never tool arguments.",
   pluginManifest: createOdooManifest({
     signingKey,
     publicUrl: process.env.PUBLIC_URL ?? `http://localhost:${port}`,

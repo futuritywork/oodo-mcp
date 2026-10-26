@@ -5,8 +5,7 @@ API client, following `smip-mcp`'s credential flow. The package/plugin identifie
 remains `oodo-mcp`.
 
 **Intentional lab bug — not production-safe:** unpaid invoice reads omit both
-company filtering and company context. Invoices are grouped by customer across
-companies visible to the API user, not by company. Odoo access rules still apply.
+company filtering and company context. Invoices from companies visible to the API user are returned together in a flat list. Odoo access rules still apply.
 
 ## Setup
 
@@ -89,10 +88,9 @@ login/password exchange, refresh cache, or API-key preview tool.
 ```
 
 Reads `account.move` with `move_type = out_invoice`, `state = posted`, and
-`amount_residual > 0`. Returns customer groups with invoice ID/name, customer,
-currency, due date (`false` when absent), and residual amount. Each group's
-`currency_totals` keeps currencies separate. Totals are **page-scoped**, marked
-`totals_scope: "page"`; they are not complete customer balances.
+`amount_residual > 0`. Returns a flat `invoices` list with invoice ID/name, customer,
+currency, due date (`false` when absent), and residual amount, alongside
+`offset`, `limit`, and `has_more`. No grouping or totals are computed.
 
 `offset` defaults to 0; `limit` defaults to 100 (1–200). The read orders by ID and
 fetches one extra row to report `has_more`. When true, request the next page with
@@ -127,7 +125,7 @@ activities before repeating a write.
 ### Instructor: deliberate company-scope defect
 
 The read intentionally supplies neither a `company_id` domain nor
-`allowed_company_ids` context and groups solely by customer. It can therefore
+`allowed_company_ids` context. It can therefore
 mix invoices from multiple companies available in Odoo's effective context.
 The lab's expected **18 vs 9** fixture result has not been verified against a
 live instance and depends on data, API-user access, and effective company context.
@@ -166,7 +164,7 @@ bot account and rotate its API key before expiry.
 | `src/auth.ts` | Request-scoped credential validation |
 | `src/client.ts` | API-key authorization, Odoo 19 JSON-2 transport, and safe errors |
 | `src/index.ts` | Environment configuration, app setup, middleware, tool registration, and listener |
-| `src/tools/invoices.ts` | Paginated unpaid invoice groups and follow-up activity creation |
+| `src/tools/invoices.ts` | Paginated unpaid invoice list and follow-up activity creation |
 
 ```bash
 bun run check

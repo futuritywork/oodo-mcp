@@ -12,22 +12,11 @@ const invoice = z.object({
   invoice_date_due: z.union([z.iso.date(), z.literal(false)]),
   amount_residual: z.number(),
 });
-const customerGroup = z.object({
-  customer_id: id,
-  customer_name: z.string(),
-  invoices: z.array(invoice),
-  currency_totals: z.array(z.object({
-    currency_id: id,
-    currency_name: z.string(),
-    amount_residual: z.number(),
-  })),
-});
 const unpaidOutput = z.object({
-  groups: z.array(customerGroup),
+  invoices: z.array(invoice),
   offset: z.number().int().nonnegative(),
   limit: z.number().int().positive(),
   has_more: z.boolean(),
-  totals_scope: z.literal("page"),
 });
 
 /** Escapes user text for the HTML note stored by Odoo activities. */
@@ -46,7 +35,7 @@ function escapeHtml(text: string): string {
 /** Registers the intentionally cross-company lab read and an explicitly assigned invoice follow-up write. */
 export function registerInvoiceTools(app: McpApp, client: OdooClient) {
   app.tool("odoo_unpaid_invoices", {
-    description: "LAB: List a page of posted unpaid customer invoices, grouped by customer across accessible companies. Intentionally omits company scoping. Currency totals cover this page only; use offset/limit and has_more to paginate.",
+    description: "LAB: List a page of posted unpaid customer invoices, as a flat list across accessible companies. Intentionally omits company scoping; use offset/limit and has_more to paginate.",
     dangerLevel: "read",
     input: z.object({
       offset: z.number().int().nonnegative().default(0),
@@ -68,21 +57,7 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
         responseSchema: z.array(invoice),
         caller: signal,
       });
-      const groups = new Map<number, z.infer<typeof customerGroup>>();
-      for (const row of rows.slice(0, limit)) {
-        const [customerId, customerName] = row.partner_id;
-        let group = groups.get(customerId);
-        if (!group) {
-          group = { customer_id: customerId, customer_name: customerName, invoices: [], currency_totals: [] };
-          groups.set(customerId, group);
-        }
-        group.invoices.push(row);
-        const [currencyId, currencyName] = row.currency_id;
-        const total = group.currency_totals.find((entry) => entry.currency_id === currencyId);
-        if (total) total.amount_residual += row.amount_residual;
-        else group.currency_totals.push({ currency_id: currencyId, currency_name: currencyName, amount_residual: row.amount_residual });
-      }
-      return { groups: [...groups.values()], offset, limit, has_more: rows.length > limit, totals_scope: "page" as const };
+      return { invoices: rows.slice(0, limit), offset, limit, has_more: rows.length > limit };
     },
   });
 

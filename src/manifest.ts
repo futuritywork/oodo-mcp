@@ -25,7 +25,7 @@ export function createOdooManifest(options: {
     category: "Business",
     metadata: {
       tagline: "Odoo invoice follow-up lab",
-      overview: "Read unpaid invoices and schedule invoice follow-up activities. This training lab intentionally omits company scoping from unpaid invoice reads, combining customers across accessible companies. An administrator configures the Odoo API key; follow-ups require explicit activity type and assignee IDs.",
+      overview: "Read unpaid invoices and schedule invoice follow-up activities. This training lab intentionally omits company scoping from unpaid invoice reads, returning invoices across accessible companies. An administrator configures the Odoo API key; follow-ups require explicit activity type and assignee IDs.",
       setupType: "admin",
     },
   };
