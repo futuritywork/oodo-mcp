@@ -26,6 +26,39 @@ bun run dev
 
 Use HTTPS for deployed Odoo and plugin URLs. Never commit `.env` or private keys.
 
+### Local Odoo with Docker Compose
+
+The Compose setup runs Odoo 19 Community and PostgreSQL 18, with persistent database
+and Odoo filestore volumes. It does not run the MCP app or seed the lab fixtures.
+
+```bash
+docker compose up -d
+# Open http://localhost:8069 and create a database named odoo.
+```
+
+On the database creation screen, set a master password and your administrator login.
+Install the Invoicing app, then create an API key in your user's account security
+settings. Configure that key in Futurity (not your login password).
+For the MCP app running on your host, set:
+
+```dotenv
+ODOO_URL=http://localhost:8069
+ODOO_DATABASE=odoo
+```
+
+Use the actual database name if you chose a different one. Create the two-company
+invoice fixtures separately; this setup does not guarantee the lab's 18-versus-9 result.
+
+```bash
+docker compose logs -f odoo
+docker compose down          # Stop containers; retain data.
+# docker compose down -v     # Destructive: delete all local database and filestore data.
+```
+
+This is a local-only setup: Odoo binds to `127.0.0.1`, PostgreSQL has no published
+port, and the database password in `compose.yaml` is a development placeholder.
+Do not expose this configuration publicly or use it for production.
+
 ## Register and connect
 
 1. Expose the plugin over HTTPS and set `PUBLIC_URL` accordingly.

@@ -10,6 +10,7 @@ export function createOdooManifest(options: {
     pluginId: "oodo-mcp",
     developerEmail: "admin@futurity.work",
     name: "Odoo",
+    icon: "https://odoocdn.com/openerp_website/static/src/img/assets/png/odoo_logo.png",
     version: "0.1.0",
     mcpUrl: `${publicUrl}/mcp`,
     auth: {
