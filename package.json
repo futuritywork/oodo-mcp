@@ -1,0 +1,19 @@
+{
+  "name": "oodo-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "keygen": "bun run scripts/keygen.ts"
+  },
+  "dependencies": {
+    "@futurity/plugins": "file:../plugins/packages/plugins"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@types/bun": "latest",
+    "typescript": "^7.0.2",
+    "zod": "^4.6.7"
+  }
+}
