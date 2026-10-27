@@ -35,7 +35,7 @@ function escapeHtml(text: string): string {
 /** Registers the intentionally cross-company lab read and an explicitly assigned invoice follow-up write. */
 export function registerInvoiceTools(app: McpApp, client: OdooClient) {
   app.tool("odoo_unpaid_invoices", {
-    description: "LAB: List a page of posted unpaid customer invoices, as a flat list across accessible companies. Intentionally omits company scoping; use offset/limit and has_more to paginate.",
+    description: "List posted unpaid customer invoices with customer, currency, due date and open amount. Use offset/limit and has_more to paginate.",
     dangerLevel: "read",
     input: z.object({
       offset: z.number().int().nonnegative().default(0),
@@ -89,28 +89,16 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
         caller: signal,
       });
       if (invoices.length === 0) throw new OdooError("Posted customer invoice not found or inaccessible.", 404);
-      const models = await client.post({
-        model: "ir.model",
-        method: "search_read",
-        params: { domain: [["model", "=", "account.move"]], fields: ["id"], limit: 1 },
-        responseSchema: z.array(z.object({ id })),
-        caller: signal,
-      });
-      const model = models[0];
-      if (!model) throw new OdooError("Invoice model not found or inaccessible.", 404);
       return client.post({
-        model: "mail.activity",
-        method: "create",
+        model: "account.move",
+        method: "activity_schedule",
         params: {
-          vals_list: [{
-            res_model_id: model.id,
-            res_id: invoice_id,
-            activity_type_id,
-            user_id: assignee_user_id,
-            date_deadline: due_date,
-            summary: `Invoice follow-up: ${attendee_name}`,
-            note: `<p>Attendee: ${escapeHtml(attendee_name)}</p><p>${escapeHtml(note).replace(/\r\n|\r|\n/g, "<br>")}</p>`,
-          }],
+          ids: [invoice_id],
+          activity_type_id,
+          user_id: assignee_user_id,
+          date_deadline: due_date,
+          summary: `Invoice follow-up: ${attendee_name}`,
+          note: `<p>Attendee: ${escapeHtml(attendee_name)}</p><p>${escapeHtml(note).replace(/\r\n|\r|\n/g, "<br>")}</p>`,
         },
         responseSchema: z.array(id),
         caller: signal,
