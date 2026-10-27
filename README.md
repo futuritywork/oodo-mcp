@@ -1,8 +1,11 @@
 # oodo-mcp
 
 Odoo 19 Futurity MCP invoice lab with request-scoped credentials and a separate
-API client, following `smip-mcp`'s credential flow. The package/plugin identifier
-remains `oodo-mcp`.
+API client.
+
+**New here?** Follow [GUIDE.md](GUIDE.md), or point your coding agent at
+`.claude/skills/odoo-futurity-plugin/SKILL.md`. Change `pluginId` in
+`src/manifest.ts` before you register: plugin ids are unique across Futurity.
 
 **Intentional lab bug — not production-safe:** unpaid invoice reads omit both
 company filtering and company context. Invoices from companies visible to the API user are returned together in a flat list. Odoo access rules still apply.
@@ -111,9 +114,9 @@ fetches one extra row to report `has_more`. When true, request the next page wit
 
 IDs are illustrative: supply an accessible posted customer invoice, a known
 activity type, and the intended assignee's Odoo user ID. No IDs are guessed.
-The tool validates a real `YYYY-MM-DD` calendar date, checks the invoice, resolves
-`account.move` through `ir.model`, and creates one `mail.activity` using
-`vals_list`. It returns an integer array of created activity IDs. The attendee
+The tool validates a real `YYYY-MM-DD` calendar date, checks the invoice, and calls
+`account.move` `activity_schedule` on it, so a Billing user needs no access to
+`ir.model`. It returns an integer array of created activity IDs. The attendee
 prefix and note are HTML-escaped; note line breaks are preserved. This schedules
 an activity, not a calendar attendee invitation or an email.
 
@@ -127,8 +130,9 @@ activities before repeating a write.
 The read intentionally supplies neither a `company_id` domain nor
 `allowed_company_ids` context. It can therefore
 mix invoices from multiple companies available in Odoo's effective context.
-The lab's expected **18 vs 9** fixture result has not been verified against a
-live instance and depends on data, API-user access, and effective company context.
+On Odoo's demo data (two companies, USD and IDR, with repeating invoice numbers)
+the read returns 18 invoices; with the fix below it returns 9, with Acme
+Corporation on top at $98,375. Other data and API-user access give other counts.
 
 For the company-scope exercise, add this to the unpaid `search_read` **params**:
 

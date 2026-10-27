@@ -10,7 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@futurity/plugins": "file:../plugins/packages/plugins"
+    "@futurity/plugins": "^3.0.0"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
