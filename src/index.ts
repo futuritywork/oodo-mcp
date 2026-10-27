@@ -22,7 +22,7 @@ const app = mcp({
   }),
 });
 cors({
-  allowOrigin: "http://localhost:3000",
+  allowOrigin: "*",
   allowHeaders: [
     "Content-Type", "Authorization", "Accept", "Mcp-Session-Id",
     "Mcp-Protocol-Version", "X-Futurity-Data-Params", "X-Plugin-Access-Token", "ngrok-skip-browser-warning",
