@@ -1,8 +1,9 @@
 import { FUTURITY_META_KEY, type PluginManifestInput } from "@futurity/plugins";
 
-/* Change these two when you make the plugin yours. The name is unique across
-   Futurity and cannot change once the plugin is registered. */
-const PLUGIN_NAME = "work.futurity.lab/odoo";
+/* Change these two when you make the plugin yours. The name cannot change once
+   the plugin is registered, and must not be one a marketplace plugin carries or
+   sit in Futurity's own work.futurity namespace. */
+const PLUGIN_NAME = "com.futuritylab/odoo";
 const DEVELOPER_EMAIL = "admin@futurity.work";
 
 /** Builds the manifest Futurity reads at /.well-known/futurity/plugin. */

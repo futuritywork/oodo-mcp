@@ -5,8 +5,8 @@ API client.
 
 **New here?** Follow [GUIDE.md](GUIDE.md), or point your coding agent at
 `.claude/skills/odoo-futurity-plugin/SKILL.md`. Change `PLUGIN_NAME` in
-`src/manifest.ts` before you register: plugin names are unique across Futurity
-and cannot change afterwards.
+`src/manifest.ts` before you register: the name cannot change afterwards and must
+not match a marketplace plugin's.
 
 **Intentional lab bug — not production-safe:** unpaid invoice reads omit both
 company filtering and company context. Invoices from companies visible to the API user are returned together in a flat list. Odoo access rules still apply.
@@ -63,8 +63,8 @@ Do not expose this configuration publicly or use it for production.
 ## Register and connect
 
 1. Expose the plugin over HTTPS and set `PUBLIC_URL` accordingly.
-2. In Futurity, discover the base URL and register the plugin.
-3. Configure the organization's **Odoo API key** in the integration credentials.
+2. In Futurity, open **Atlas**, press **Add**, pick **Integration or MCP server URL** and enter the base URL.
+3. Enter the organization's **Odoo API key** in the dialog that follows and press **Add**.
 
 The manifest (spec 5, `@futurity/plugins` 4) is served unsigned at
 `/.well-known/futurity/plugin`. It declares one credential option held by the

@@ -22,7 +22,7 @@ Ask the person for anything they haven't given you yet. Never invent a value.
 
 | Value | Example | Goes to |
 | --- | --- | --- |
-| Their name, lowercase | `rina` | `PLUGIN_NAME = "work.futurity.lab/odoo-rina"` in `src/manifest.ts`; names are unique across Futurity and cannot change once registered |
+| Their name, lowercase | `rina` | `PLUGIN_NAME = "com.futuritylab/odoo-rina"` in `src/manifest.ts`; the name cannot change once registered and must not match a marketplace plugin's once registered |
 | Their email | `rina@partner.co` | `DEVELOPER_EMAIL` in `src/manifest.ts` |
 | Odoo address | `https://odoo.example.com` | `ODOO_URL` in `.env` |
 | Odoo database name, if the server hosts more than one | `odoo` | `ODOO_DATABASE` in `.env` |
@@ -52,7 +52,7 @@ Check: `bun run check` prints no errors.
 
 ## 2. Make the plugin theirs
 
-In `src/manifest.ts`, set `PLUGIN_NAME` to `work.futurity.lab/odoo-<name>` and `DEVELOPER_EMAIL` to their email. Change nothing else.
+In `src/manifest.ts`, set `PLUGIN_NAME` to `com.futuritylab/odoo-<name>` and `DEVELOPER_EMAIL` to their email. Change nothing else.
 
 ## 3. `.env`
 
@@ -83,18 +83,17 @@ Every time cloudflared restarts, the address changes. When that happens:
 
 1. Update `PUBLIC_URL`.
 2. Restart `bun run dev`.
-3. Change the URL in Futurity and re-verify it from the row's ⋯ menu.
+3. Give Futurity the new address: **Marketplace** › **Your plugins** › **Edit** on the plugin's row.
 
 ## 5. Register, connect, ask
 
 Hand these steps to the person. They happen in the browser:
 
-1. **Register:** in Futurity, open **Marketplace**, then the **Developer Tools** tab, then **Add**.
-   - Paste the tunnel address (the base URL, without `/mcp`) and click **Discover**.
-   - Check the name and version it found and click **Register Plugin**.
-2. **Get an Odoo key:** in Odoo, open your avatar, then **Preferences**, then **Account Security**, then **New API Key**. Copy the key.
-3. **Connect:** open the plugin from the **Browse** tab and paste the Odoo key. This step needs an organization administrator.
-4. **Ask:** in a new chat, name the plugin and the tool:
+1. **Get an Odoo key:** in Odoo, open your avatar, then **Preferences**, then **Account Security**, then **New API Key**. Copy the key.
+2. **Register:** in Futurity, open **Atlas** and press **Add**. This needs the **Manage systems** permission.
+   - Under **By URL**, pick **Integration or MCP server URL**, paste the tunnel address and click **Continue**.
+   - In the next dialog, paste the Odoo key, choose who can use the plugin and press **Add**.
+3. **Ask:** in a new chat, name the plugin and the tool. A plugin an organization registers starts with every tool on **Needs approval**, so the first call asks: click **Allow once**.
    > Use the Odoo plugin's odoo_unpaid_invoices tool: which customers owe us the most right now?
 
 Check: the answer comes from `odoo_unpaid_invoices`.
@@ -140,7 +139,7 @@ Ask the person for the activity type and the user id. Don't guess them. A follow
 | --- | --- | --- |
 | Futurity: "No Futurity plugin manifest at this URL" | The tunnel is down or `PUBLIC_URL` is stale | Check that the tunnel is running and matches `PUBLIC_URL`; restart `bun run dev` |
 | Registration fails with `unsupported_spec_version` | An old `@futurity/plugins` | `bun add @futurity/plugins@^4.1.0` |
-| Registration says the plugin name is taken | Someone else registered the same name | Use `work.futurity.lab/odoo-<name>` in `src/manifest.ts`, restart, and discover again |
+| Registration says the plugin name is taken | Someone else registered the same name | Use `com.futuritylab/odoo-<name>` in `src/manifest.ts`, restart, and add it again |
 | `Odoo request failed.` on every call | Wrong or expired API key, or `ODOO_DATABASE` is missing on a multi-database server | Paste a fresh key in Futurity, or set `ODOO_DATABASE` |
 | Corint answers from Salesforce, Atlas or memory | It picked another tool | Name the plugin and the tool in the prompt |
 | The plugin is marked **Update needed** in Futurity | It was registered from the old SDK 3 version of this repository | Pull this version, restart, and register it again |
