@@ -1,5 +1,4 @@
 import type { z } from "zod";
-import { getApiKey } from "./auth";
 
 /** A sanitized failure; upstream response bodies and credentials are never included. */
 export class OdooError extends Error {
@@ -9,7 +8,7 @@ export class OdooError extends Error {
   }
 }
 
-/** Sends Odoo 19 JSON-2 calls using request-local API keys and trusted server configuration. */
+/** Sends Odoo 19 JSON-2 calls with the API key Futurity delivered for this request. */
 export class OdooClient {
   private readonly baseUrl: string;
 
@@ -31,15 +30,18 @@ export class OdooClient {
     method,
     params,
     responseSchema,
+    apiKey,
     caller,
   }: {
     model: string;
     method: string;
     params: Record<string, unknown>;
     responseSchema: S;
+    /** The organization's Odoo key: `credentials.api_key` in a tool handler. */
+    apiKey: string | undefined;
     caller?: AbortSignal;
   }): Promise<z.infer<S>> {
-    const apiKey = getApiKey();
+    if (!apiKey) throw new OdooError("Odoo API key required.", 400);
     const timeout = AbortSignal.timeout(15_000);
     let response: Response;
     try {
@@ -50,7 +52,7 @@ export class OdooClient {
           Authorization: `bearer ${apiKey}`,
           "Content-Type": "application/json; charset=utf-8",
           Accept: "application/json",
-          "User-Agent": "oodo-mcp/0.1.0",
+          "User-Agent": "oodo-mcp/0.2.0",
           ...(this.database ? { "X-Odoo-Database": this.database } : {}),
         },
         body: JSON.stringify(params),

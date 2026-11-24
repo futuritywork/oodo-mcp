@@ -4,8 +4,9 @@ Odoo 19 Futurity MCP invoice lab with request-scoped credentials and a separate
 API client.
 
 **New here?** Follow [GUIDE.md](GUIDE.md), or point your coding agent at
-`.claude/skills/odoo-futurity-plugin/SKILL.md`. Change `pluginId` in
-`src/manifest.ts` before you register: plugin ids are unique across Futurity.
+`.claude/skills/odoo-futurity-plugin/SKILL.md`. Change `PLUGIN_NAME` in
+`src/manifest.ts` before you register: the name cannot change afterwards and must
+not match a marketplace plugin's.
 
 **Intentional lab bug — not production-safe:** unpaid invoice reads omit both
 company filtering and company context. Invoices from companies visible to the API user are returned together in a flat list. Odoo access rules still apply.
@@ -15,18 +16,16 @@ company filtering and company context. Invoices from companies visible to the AP
 ```bash
 bun install
 cp .env.example .env
-bun run keygen
-# Add the generated private signing key and ODOO_URL to .env.
+# Set ODOO_URL in .env.
 bun run dev
 ```
 
-- `FUTURITY_SIGNING_KEY`: Ed25519 private key from `keygen` (required).
 - `ODOO_URL`: trusted Odoo 19 instance root, e.g. `https://company.odoo.com` (required).
 - `ODOO_DATABASE`: optional database name when the hostname does not select it.
 - `PUBLIC_URL`: externally reachable plugin URL; defaults to `http://localhost:3000`.
 - `PORT`: listener port, default `3000`.
 
-Use HTTPS for deployed Odoo and plugin URLs. Never commit `.env` or private keys.
+Use HTTPS for deployed Odoo and plugin URLs. Never commit `.env`.
 
 ### Local Odoo with Docker Compose
 
@@ -64,13 +63,13 @@ Do not expose this configuration publicly or use it for production.
 ## Register and connect
 
 1. Expose the plugin over HTTPS and set `PUBLIC_URL` accordingly.
-2. In Futurity, discover the base URL and register with the public signing key.
-3. Configure the organization's **Odoo API key** in the integration credentials.
+2. In Futurity, open **Atlas**, press **Add**, pick **Integration or MCP server URL** and enter the base URL.
+3. Enter the organization's **Odoo API key** in the dialog that follows and press **Add**.
 
-The signed manifest is at `/.well-known/futurity/plugin`; its detached signature
-is in `X-Futurity-Signature`. The manifest uses
-`type: "none"`, `grantType: "api_key"`, and a required password-style
-`api_key` field. Futurity forwards it as:
+The manifest (spec 5, `@futurity/plugins` 4) is served unsigned at
+`/.well-known/futurity/plugin`. It declares one credential option held by the
+organization: a password-style `api_key` field. Futurity sends it on every call,
+next to its identity token in `Authorization`, as:
 
 ```text
 X-Plugin-Access-Token: <secret>
@@ -148,7 +147,7 @@ not an implemented fix or a tool input. The deliberate defect remains in the lab
 
 `src/index.ts` configures the app and client, then starts the listener.
 Invoice tools are registered before `app.listen()` and use
-`client.post({ model, method, params: namedParams, responseSchema, caller: signal })` inside their handlers. Model and method names should be selected by the tool code.
+`client.post({ model, method, params: namedParams, responseSchema, apiKey: credentials.api_key, caller: signal })` inside their handlers. Model and method names should be selected by the tool code.
 
 The client posts named JSON parameters to `/json/2/<model>/<method>` with
 `Authorization: bearer <API key>` and optional `X-Odoo-Database`. It validates
@@ -164,10 +163,9 @@ bot account and rotate its API key before expiry.
 
 | File | Responsibility |
 | --- | --- |
-| `src/manifest.ts` | Signed discovery manifest configuration |
-| `src/auth.ts` | Request-scoped credential validation |
+| `src/manifest.ts` | The spec 5 manifest: name, remote and the API-key credential |
 | `src/client.ts` | API-key authorization, Odoo 19 JSON-2 transport, and safe errors |
-| `src/index.ts` | Environment configuration, app setup, middleware, tool registration, and listener |
+| `src/index.ts` | Environment configuration, the Futurity issuers it trusts, tool registration, and listener |
 | `src/tools/invoices.ts` | Paginated unpaid invoice list and follow-up activity creation |
 
 ```bash

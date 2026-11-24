@@ -9,7 +9,7 @@ You'll run a small server that lets Futurity's assistant, Corint, read unpaid in
 | 1 | **Bun** runs the plugin | macOS/Linux: `curl -fsSL https://bun.sh/install \| bash`<br>Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"` | `bun --version` prints a number |
 | 2 | **cloudflared** gives your laptop a public address | macOS: `brew install cloudflared`<br>Windows: `winget install --id Cloudflare.cloudflared` | `cloudflared --version` prints a number |
 | 3 | **A coding agent** | Claude Code, Codex or Cursor | It can run commands |
-| 4 | **Futurity** | Log in, open **Marketplace** › **Developer Tools** | You can see the **Add** button |
+| 4 | **Futurity** | Log in, open **Atlas** in the left panel | You can see the **Add** button (it needs the **Manage systems** permission) |
 | 5 | **An Odoo API key** | In Odoo: avatar › **Preferences** › **Account Security** › **New API Key** | The key is copied somewhere safe |
 
 You don't need a Cloudflare account. Close and reopen your terminal after installing, so the new commands are found.
@@ -34,19 +34,18 @@ Claude Code also picks up the skill on its own when you open this folder. The ag
 | Step | What happens | You should see |
 | --- | --- | --- |
 | 1. Install (1 min) | `bun install`, `bun run check` | No errors |
-| 2. Make it yours (1 min) | Your name goes into the plugin id | `odoo-yourname` in `src/manifest.ts` |
-| 3. Signing key (1 min) | `bun run keygen` | A **public key**. Keep it for step 5. |
+| 2. Make it yours (1 min) | Your name goes into the plugin name | `com.futuritylab/odoo-yourname` in `src/manifest.ts` |
+| 3. Settings (1 min) | `cp .env.example .env`, then the Odoo address goes in | `ODOO_URL` set in `.env` |
 | 4. Tunnel and run (2 min) | `cloudflared tunnel --url http://localhost:3000`, then `bun run dev` | A `https://….trycloudflare.com` address that serves the plugin |
 | 5. Register and connect (3 min) | You do this one in the browser (below) | The plugin listed and connected |
 | 6. Fix the double count (5 min) | Add a company filter to the invoice read | 9 invoices instead of 18, Acme Corporation on top at $98,375 |
 
 ### Step 5 in the browser
 
-1. In Futurity, open **Marketplace** › **Developer Tools** › **Add**.
-2. Paste the `trycloudflare.com` address (without `/mcp`) and click **Discover**.
-3. Paste the public key from step 3 and click **Register Plugin**.
-4. Open the plugin from **Browse**, paste your **Odoo API key** and save. This needs an organization admin.
-5. Start a new chat and ask:
+1. In Futurity, open **Atlas** and press **Add**.
+2. Under **By URL**, pick **Integration or MCP server URL**, paste the `trycloudflare.com` address and click **Continue**.
+3. In the next dialog, paste your **Odoo API key**, choose who can use the plugin and press **Add**.
+4. Start a new chat and ask (the first call asks for approval: click **Allow once**):
 
 > Use the Odoo plugin's odoo_unpaid_invoices tool: which customers owe us the most right now?
 
@@ -56,11 +55,11 @@ Look closely at the answer before you go to step 6.
 
 | You see | Do this |
 | --- | --- |
-| "Could not discover a plugin" | Check the tunnel terminal is still running and the address in `.env` matches it. Restart `bun run dev`. |
-| Registration fails because the plugin id is taken | Put your own name in `pluginId` in `src/manifest.ts`, restart, and discover again. |
+| "No Futurity plugin manifest at this URL" | Check the tunnel terminal is still running and the address in `.env` matches it. Restart `bun run dev`. |
+| Registration fails because the plugin name is taken | Put your own name in `PLUGIN_NAME` in `src/manifest.ts`, restart, and add it again. |
 | "Odoo request failed." | The Odoo key is wrong or expired. Make a new one and paste it in Futurity. |
 | Corint answers from another system | Name the plugin and the tool in your question, as in the example above. |
-| The tunnel was closed and reopened | It has a new address now. Update `PUBLIC_URL` in `.env`, restart `bun run dev`, then change the URL in Futurity and re-verify it from the row's ⋯ menu. |
+| The tunnel was closed and reopened | It has a new address now. Update `PUBLIC_URL` in `.env`, restart `bun run dev`, then give Futurity the new address: **Marketplace** › **Your plugins** › **Edit** on the plugin's row. |
 
 ## Learn more
 
