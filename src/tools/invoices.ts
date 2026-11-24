@@ -36,13 +36,13 @@ function escapeHtml(text: string): string {
 export function registerInvoiceTools(app: McpApp, client: OdooClient) {
   app.tool("odoo_unpaid_invoices", {
     description: "List posted unpaid customer invoices with customer, currency, due date and open amount. Use offset/limit and has_more to paginate.",
-    dangerLevel: "read",
+    annotations: { readOnlyHint: true },
     input: z.object({
       offset: z.number().int().nonnegative().default(0),
       limit: z.number().int().min(1).max(200).default(100),
     }),
     output: unpaidOutput,
-    handler: async ({ offset, limit }, { signal }) => {
+    handler: async ({ offset, limit }, { credentials, signal }) => {
       const rows = await client.post({
         model: "account.move",
         method: "search_read",
@@ -55,6 +55,7 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
           order: "id asc",
         },
         responseSchema: z.array(invoice),
+        apiKey: credentials.api_key,
         caller: signal,
       });
       return { invoices: rows.slice(0, limit), offset, limit, has_more: rows.length > limit };
@@ -62,8 +63,8 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
   });
 
   app.tool("odoo_schedule_followup", {
-    description: "Create one mail.activity follow-up on a posted customer invoice. Requires explicit activity type and assignee user IDs. Attendee name is prefixed to the HTML-escaped note. Returns created activity IDs; a timeout has an uncertain outcome, so verify before repeating.",
-    dangerLevel: "write",
+    description: "Create one mail.activity follow-up on a posted customer invoice. Requires explicit activity type and assignee user IDs. Attendee name is prefixed to the HTML-escaped note. Returns the created activity IDs; a timeout has an uncertain outcome, so verify before repeating.",
+    annotations: { readOnlyHint: false, destructiveHint: false },
     input: z.object({
       invoice_id: id,
       attendee_name: z.string().trim().min(1),
@@ -75,8 +76,8 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
       activity_type_id: id,
       assignee_user_id: id,
     }),
-    output: z.array(id),
-    handler: async ({ invoice_id, attendee_name, note, due_date, activity_type_id, assignee_user_id }, { signal }) => {
+    output: z.object({ activity_ids: z.array(id) }),
+    handler: async ({ invoice_id, attendee_name, note, due_date, activity_type_id, assignee_user_id }, { credentials, signal }) => {
       const invoices = await client.post({
         model: "account.move",
         method: "search_read",
@@ -86,10 +87,11 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
           limit: 1,
         },
         responseSchema: z.array(z.object({ id })),
+        apiKey: credentials.api_key,
         caller: signal,
       });
       if (invoices.length === 0) throw new OdooError("Posted customer invoice not found or inaccessible.", 404);
-      return client.post({
+      const activity_ids = await client.post({
         model: "account.move",
         method: "activity_schedule",
         params: {
@@ -101,8 +103,10 @@ export function registerInvoiceTools(app: McpApp, client: OdooClient) {
           note: `<p>Attendee: ${escapeHtml(attendee_name)}</p><p>${escapeHtml(note).replace(/\r\n|\r|\n/g, "<br>")}</p>`,
         },
         responseSchema: z.array(id),
+        apiKey: credentials.api_key,
         caller: signal,
       });
+      return { activity_ids };
     },
   });
 }
